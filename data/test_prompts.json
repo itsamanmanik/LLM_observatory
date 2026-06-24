@@ -1,0 +1,37 @@
+[
+  {
+    "category": "factual",
+    "prompt": "What is the capital of Australia and what is its population?",
+    "context": null
+  },
+  {
+    "category": "factual",
+    "prompt": "Explain the difference between supervised and unsupervised learning.",
+    "context": null
+  },
+  {
+    "category": "factual",
+    "prompt": "What is the role of attention mechanism in transformer models?",
+    "context": null
+  },
+  {
+    "category": "rag",
+    "prompt": "What are the key benefits mentioned in the context?",
+    "context": "Vector databases store high-dimensional embeddings and enable semantic similarity search. Key benefits include: fast nearest-neighbour search at scale, support for multi-modal data, real-time indexing, and native integration with LLM frameworks like LangChain and LlamaIndex. Popular options include Pinecone, Weaviate, Chroma, and Qdrant."
+  },
+  {
+    "category": "rag",
+    "prompt": "According to the passage, what are the risks of LLMs?",
+    "context": "Large language models (LLMs) present several risks in production environments. These include hallucination, where models generate plausible but incorrect information. They also exhibit prompt injection vulnerabilities, where malicious inputs manipulate model behaviour. Other concerns include data privacy leakage, bias amplification, and high inference costs at scale."
+  },
+  {
+    "category": "instruction",
+    "prompt": "List exactly 4 use cases for RAG systems. Use numbered list only. No extra text.",
+    "context": null
+  },
+  {
+    "category": "instruction",
+    "prompt": "Summarise the concept of LangGraph in exactly 2 sentences.",
+    "context": null
+  }
+]

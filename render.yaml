@@ -1,0 +1,28 @@
+services:
+  # ── FastAPI Backend ──────────────────────────────────────────────────────
+  - type: web
+    name: llm-observatory-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///./data/observatory.db
+      - key: APP_ENV
+        value: production
+
+  # ── Streamlit Dashboard ──────────────────────────────────────────────────
+  - type: web
+    name: llm-observatory-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: APP_ENV
+        value: production

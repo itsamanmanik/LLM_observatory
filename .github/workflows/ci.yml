@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check backend/ dashboard/ --ignore E501
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest tests/ -v --tb=short
+        continue-on-error: true   # tests optional until you add them
