@@ -86,7 +86,7 @@ def call_llm(
     # needs real-time data, auto-fetch Wikipedia context.
     effective_context = context
     if context is None and category == "factual" and needs_grounding(prompt):
-        log.info(f"Real-time query detected — fetching web context")
+        log.info("Real-time query detected — fetching web context")
         web_ctx = fetch_grounding_context(prompt)
         if web_ctx:
             effective_context = web_ctx

@@ -3,8 +3,6 @@ CRUD helpers — all DB reads/writes go through here.
 Compatible with pandas 3.x (stricter groupby, copy-on-write enabled by default).
 """
 
-from typing import Optional
-
 import pandas as pd
 from sqlalchemy.orm import Session
 
