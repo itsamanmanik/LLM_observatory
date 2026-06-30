@@ -18,7 +18,7 @@ class Trace(Base):
     id             = Column(Integer, primary_key=True, index=True)
     trace_id       = Column(String(64), unique=True, index=True, nullable=False)
     model          = Column(String(64), nullable=False)        # e.g. groq/llama-3.3-70b-versatile
-    provider       = Column(String(32), nullable=False)        # groq | gemini | mistral
+    provider       = Column(String(32), nullable=False)        # groq | cerebras | mistral
     prompt         = Column(Text, nullable=False)
     response       = Column(Text, nullable=False)
     context        = Column(Text, nullable=True)               # RAG context if any

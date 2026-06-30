@@ -29,7 +29,7 @@ def run_batch():
             "prompt":    item["prompt"],
             "context":   item.get("context"),
             "category":  item["category"],
-            "providers": ["groq", "gemini", "mistral"],
+            "providers": ["groq", "cerebras", "mistral"],
         }
         try:
             r = requests.post(f"{API_BASE}/run", json=payload, timeout=90)

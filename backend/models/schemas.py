@@ -8,7 +8,7 @@ class RunRequest(BaseModel):
     prompt:   str = Field(..., min_length=1, max_length=4000, description="User prompt to evaluate")
     context:  Optional[str] = Field(None, max_length=8000, description="RAG context (optional)")
     category: Literal["factual", "rag", "instruction"] = "factual"
-    providers: list[Literal["groq", "gemini", "mistral"]] = ["groq", "gemini", "mistral"]
+    providers: list[Literal["groq", "cerebras", "mistral"]] = ["groq", "cerebras", "mistral"]
 
 
 class RunResult(BaseModel):

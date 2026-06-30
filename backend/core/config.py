@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     )
 
     # LLM API Keys
-    GROQ_API_KEY:    str = ""
-    GEMINI_API_KEY:  str = ""
-    MISTRAL_API_KEY: str = ""
+    GROQ_API_KEY:     str = ""
+    CEREBRAS_API_KEY: str = ""
+    MISTRAL_API_KEY:  str = ""
 
     # Database
     DATABASE_URL: str = "sqlite:///./data/observatory.db"

@@ -8,6 +8,9 @@ Run with:
 
 from typing import Optional
 
+import re
+import html
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -20,7 +23,7 @@ API_BASE = "http://localhost:8000/api/v1"
 
 PROVIDER_COLORS = {
     "groq":    "#00C9A7",
-    "gemini":  "#4285F4",
+    "cerebras": "#FF6B6B",
     "mistral": "#FF6B35",
 }
 
@@ -58,6 +61,12 @@ st.markdown("""
         border-radius: 8px;
         font-weight: 600;
         padding: 0.5rem 1.5rem;
+    }
+    /* Hide Streamlit top-right toolbar (Share / Deploy) */
+    div[data-testid="stToolbar"],
+    button[title="Share"],
+    button[aria-label="Share"] {
+        display: none !important;
     }
     h1 { color: #a5b4fc !important; }
     h2 { color: #c4b5fd !important; }
@@ -98,7 +107,7 @@ def api_post(endpoint: str, payload: dict) -> Optional[dict]:
 
 
 def badge(provider: str) -> str:
-    colors = {"groq": "00C9A7", "gemini": "4285F4", "mistral": "FF6B35"}
+    colors = {"groq": "00C9A7", "cerebras": "FF6B6B", "mistral": "FF6B35"}
     c = colors.get(provider, "888888")
     return (
         f'<span style="background:#{c};color:white;padding:2px 8px;'
@@ -118,6 +127,84 @@ def score_bar(value: float, inverse: bool = False) -> str:
         f'<span style="color:{color};font-size:0.8rem;font-weight:600">{value:.2f}</span>'
         f'</div>'
     )
+
+
+def strip_markdown(text: str) -> str:
+    """Strip Markdown symbols so raw text previews cleanly inside an HTML <p> tag."""
+    import re
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.*?)\*', r'\1', text)
+    text = re.sub(r'#{1,6}\s*', '', text)
+    text = re.sub(r'={3,}', '', text)
+    text = re.sub(r'-{3,}', '', text)
+    text = re.sub(r'`{1,3}', '', text)
+    return text.strip()
+
+
+def render_markdown_to_html(md: str) -> str:
+    """Minimal Markdown -> HTML renderer for common elements (headings, lists, code)."""
+    if not md:
+        return ""
+
+    # Escape any HTML first
+    s = html.escape(md)
+
+    # Code fences ```...```
+    def _code_fence_repl(m):
+        code = m.group(1)
+        return f"<pre><code>{code}</code></pre>"
+
+    s = re.sub(r"```\s*\n(.*?)\n\s*```", lambda m: _code_fence_repl(m), s, flags=re.S)
+
+    # Inline code `...`
+    s = re.sub(r"`([^`]+)`", lambda m: f"<code>{m.group(1)}</code>", s)
+
+    # Headings
+    for i in range(6, 0, -1):
+        s = re.sub(rf"^{{0,3}}{'#'*i}\s*(.+)$", rf"<h{i}>\1</h{i}>", s, flags=re.M)
+
+    # Lists (unordered and ordered)
+    lines = s.splitlines()
+    out_lines = []
+    in_ul = in_ol = False
+    for line in lines:
+        m_ul = re.match(r"^\s*[-*]\s+(.*)$", line)
+        m_ol = re.match(r"^\s*(\d+)\.\s+(.*)$", line)
+        if m_ul:
+            if not in_ul:
+                out_lines.append("<ul>")
+                in_ul = True
+            out_lines.append(f"<li>{m_ul.group(1)}</li>")
+            continue
+        else:
+            if in_ul:
+                out_lines.append("</ul>")
+                in_ul = False
+
+        if m_ol:
+            if not in_ol:
+                out_lines.append("<ol>")
+                in_ol = True
+            out_lines.append(f"<li>{m_ol.group(2)}</li>")
+            continue
+        else:
+            if in_ol:
+                out_lines.append("</ol>")
+                in_ol = False
+
+        out_lines.append(line)
+
+    if in_ul:
+        out_lines.append("</ul>")
+    if in_ol:
+        out_lines.append("</ol>")
+
+    s = "\n".join(out_lines)
+
+    # Paragraphs: wrap lines separated by blank lines
+    parts = re.split(r"\n\s*\n", s)
+    parts = [p if p.strip().startswith("<") else f"<p>{p.strip()}</p>" for p in parts]
+    return "\n".join(parts)
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -173,8 +260,8 @@ if page == "🚀 Run Evaluation":
         )
         providers = st.multiselect(
             "Models to Compare",
-            ["groq", "gemini", "mistral"],
-            default=["groq", "gemini", "mistral"],
+            ["groq", "cerebras", "mistral"],
+            default=["groq", "cerebras", "mistral"],
         )
         st.markdown("<br>", unsafe_allow_html=True)
         run_btn = st.button("⚡ Run Evaluation", use_container_width=True)
@@ -224,6 +311,7 @@ if page == "🚀 Run Evaluation":
                         alert    = res.get("alert_triggered")
                         border   = "#ef4444" if alert else "#2d3148"
 
+                        preview = strip_markdown(res['response'])[:300]
                         st.markdown(f"""
                         <div style="border:1px solid {border};border-radius:12px;padding:1rem;background:#1c1f2e">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem">
@@ -231,7 +319,7 @@ if page == "🚀 Run Evaluation":
                                 <span style="color:#94a3b8;font-size:0.75rem">{res['latency_ms']:.0f}ms</span>
                             </div>
                             <p style="font-size:0.82rem;color:#cbd5e1;margin-bottom:0.8rem;min-height:80px">
-                                {res['response'][:300]}{'…' if len(res['response']) > 300 else ''}
+                                {preview}{'…' if len(res['response']) > 300 else ''}
                             </p>
                         </div>
                         """, unsafe_allow_html=True)
@@ -252,7 +340,7 @@ if page == "🚀 Run Evaluation":
                             st.markdown('<div class="success-box">✅ No alerts</div>', unsafe_allow_html=True)
 
                         with st.expander("Full Response"):
-                            st.write(res["response"])
+                            st.markdown(res["response"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,8 @@
 """
-LLM Tracer — calls Groq, Gemini, Mistral via openai-compatible SDK.
+LLM Tracer — calls Groq, Cerebras, Mistral via openai-compatible SDK.
 
+All three providers expose an OpenAI-compatible REST API.
+ONE unified code path handles all of them — no provider-specific branching.
 """
 
 import time
@@ -26,15 +28,16 @@ MODELS = {
         "cost_input_per_1m":  0.0,
         "cost_output_per_1m": 0.0,
     },
-    "gemini": {
-        # gemini-1.5-flash is 404 on v1beta openai endpoint — use 2.0-flash
-        "model_id":           "gemini-2.0-flash",
-        "display":            "Gemini 2.0 Flash",
-        "provider":           "gemini",
-        "base_url":           "https://generativelanguage.googleapis.com/v1beta/openai/",
-        "api_key_attr":       "GEMINI_API_KEY",
-        "cost_input_per_1m":  0.10,
-        "cost_output_per_1m": 0.40,
+    "cerebras": {
+        # llama-3.3-70b was deprecated by Cerebras Feb 2026 — gpt-oss-120b
+        # is their current fastest, free-tier-friendly model
+        "model_id":           "gpt-oss-120b",
+        "display":            "GPT-OSS 120B (Cerebras)",
+        "provider":           "cerebras",
+        "base_url":           "https://api.cerebras.ai/v1",
+        "api_key_attr":       "CEREBRAS_API_KEY",
+        "cost_input_per_1m":  0.0,
+        "cost_output_per_1m": 0.0,
     },
     "mistral": {
         "model_id":           "mistral-small-latest",
@@ -82,8 +85,6 @@ def call_llm(
     trace_id = str(uuid.uuid4())
 
     # ── Web grounding for factual queries ─────────────────────────────────────
-    # If no RAG context was manually provided and the question looks like it
-    # needs real-time data, auto-fetch Wikipedia context.
     effective_context = context
     if context is None and category == "factual" and needs_grounding(prompt):
         log.info("Real-time query detected — fetching web context")
@@ -104,6 +105,8 @@ def call_llm(
     start = time.perf_counter()
 
     try:
+        # ── ONE unified path for Groq, Cerebras, Mistral ──────────────────────
+        # All three accept the standard OpenAI chat.completions schema.
         client = OpenAI(
             api_key=api_key,
             base_url=cfg["base_url"],
